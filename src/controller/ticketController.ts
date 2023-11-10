@@ -4,16 +4,25 @@ import * as userService from '../service/userService';
 
 export const payForTicket = async (req: Request, res: Response) => {
   try {
-    const { userId, ticketId } = req.body;
-    const userBalance = await userService.getUserBalance(userId);
-    const ticket = await ticketService.findTicketById(ticketId);
+    const userId = parseInt(req.params.userId, 10); // Get the userId from the URL parameter
 
-    if (!ticket) {
-      res.status(404).json({ error: 'Ticket not found' });
+    if (isNaN(userId)) {
+      res.status(400).json({ error: 'Invalid user ID' });
       return;
     }
 
-    if (userBalance < ticket.price) {
+    const userBalance = await userService.getUserBalance(userId);
+    const newTicket = await ticketService.createTicket(userId);
+
+    if (!newTicket) {
+      res.status(500).json({ error: 'Failed to create a new ticket' });
+      return;
+    }
+
+    const ticketPrice = newTicket.price;
+    const ticketId = newTicket.ticketNumber;
+
+    if (userBalance < ticketPrice) {
       res.status(400).json({ error: 'Insufficient balance to purchase the ticket' });
       return;
     }
@@ -21,20 +30,19 @@ export const payForTicket = async (req: Request, res: Response) => {
     const transaction = {
       user_id: userId,
       ticket_id: ticketId,
-      amount: -ticket.price,
+      amount: -ticketPrice,
       date: new Date().toISOString(),
     };
 
     const transactionId = await ticketService.createTransaction(transaction);
-    const newBalance = userBalance - ticket.price;
+    const newBalance = userBalance - ticketPrice;
     await userService.updateUserBalance(userId, newBalance);
-
-    const newTicket = await ticketService.createTicket(userId);
     res.json({ transactionId, newTicket, newBalance });
   } catch (error) {
     res.status(500).json({ error: 'Payment failed' });
   }
 };
+
 
 export const deposit = async (req: Request, res: Response) => {
   try {

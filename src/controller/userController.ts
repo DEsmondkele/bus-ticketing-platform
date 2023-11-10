@@ -60,7 +60,7 @@ export const creditUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getBalance = async (req: Request, res: Response) => {
+export const getMyBalance = async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId, 10);
 
