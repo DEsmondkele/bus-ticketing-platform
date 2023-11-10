@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import * as userService from '../src/service/userService';
 import bcrypt from 'bcrypt';
 import{
-  createUser, loginUser,creditUser} from '../src/controller/userController';
+  createUser, loginUser,creditUser, getMyBalance, getUserTransactions, sendCredit} from '../src/controller/userController';
 
 
   jest.mock('../src/service/userService', () => {
@@ -17,6 +17,8 @@ import{
       findUserById: jest.fn(),
       findUserByUsername: jest.fn(),
       updateUserBalance: jest.fn(),
+      getUserBalance: jest.fn(),
+    
     };
   });
   
@@ -150,7 +152,137 @@ describe('creditUser', () => {
   
 });
 
+describe('getBalance', () => {
+  it('should get user balance successfully', async () => {
+    const req = { params: { userId: '1' } } as unknown as Request;
+    
+    (userService.getUserBalance as jest.Mock).mockResolvedValue(100);
+
+    await getMyBalance(req, res);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ balance: 100 });
+  });
+
+  it('should handle errors during balance retrieval', async () => {
+    const req = { params: { userId: '1' } } as unknown as Request;
+    (userService.getUserBalance as jest.Mock).mockRejectedValue(new Error('Balance retrieval failed'));
+
+    await getMyBalance(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Balance retrieval failed' });
+  });
+
 });
+describe('getUserTransactions', () => {
+  it('should get user transactions successfully', async () => {
+    const req = { params: { userId: '1' } } as unknown as Request;
+    (userService.getUserTransactions as jest.Mock).mockResolvedValue([{ transaction: 'data' }]);
+
+    await getUserTransactions(req, res);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith([{ transaction: 'data' }]);
+  });
+
+  it('should handle errors during transaction retrieval', async () => {
+    const req = { params: { userId: '1' } } as unknown as Request;
+    (userService.getUserTransactions as jest.Mock).mockRejectedValue(new Error('Transaction retrieval failed'));
+
+    await getUserTransactions(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Transaction retrieval failed' });
+  });
+});
+describe('sendCredit', () => {
+  it('should send credit successfully', async () => {
+    const req = {
+      body: { fromUserId: 1, toUserId: 2, amount: 50 },
+    } as Request;
+    (userService.findUserById as jest.Mock).mockResolvedValue({ balance: 100 });
+    (userService.sendCredit as jest.Mock).mockResolvedValue({ transaction: 'data' });
+
+    await sendCredit(req, res);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ transaction: 'data' }); // Update this line
+  });
+
+  it('should handle sender not found', async () => {
+    const req = {
+      body: { fromUserId: 1, toUserId: 2, amount: 50 },
+    } as Request;
+    (userService.findUserById as jest.Mock).mockResolvedValue(null);
+
+    await sendCredit(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Sender not found' });
+  });
+
+  it('should handle recipient not found', async () => {
+    const req = {
+      body: { fromUserId: 1, toUserId: 2, amount: 50 },
+    } as Request;
+    (userService.findUserById as jest.Mock).mockResolvedValue({ balance: 100 });
+    (userService.sendCredit as jest.Mock).mockRejectedValue(new Error('Recipient not found'));
+
+    await sendCredit(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Credit sending failed' });
+  });
+
+    it('should handle insufficient balance', async () => {
+    const req = {
+      body: { fromUserId: 1, toUserId: 2, amount: 150 },
+    } as Request;
+    (userService.findUserById as jest.Mock).mockResolvedValue({ balance: 100 });
+
+    await sendCredit(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Credit sending failed' });
+  });
+
+});
+
+});
+
+
+
+
+
+
+
+
+
+//   it('should handle errors during credit sending', async () => {
+//     const req = {
+//       body: { fromUserId: 1, toUserId: 2, amount: 50 },
+//     } as Request;
+//     (userService.findUserById as jest.Mock).mockResolvedValue({ balance: 100 });
+//     (userService.sendCredit as jest.Mock).mockRejectedValue(new Error('Credit sending failed'));
+
+//     await sendCredit(req, res);
+
+//     expect(res.status).toHaveBeenCalledWith(500);
+//     expect(res.json).toHaveBeenCalledWith({ error: 'Credit sending failed' });
+//   });
+// });
+
+
+
+
+  
+
+
+
+
+
+
 
 
 

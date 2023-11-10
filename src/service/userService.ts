@@ -38,22 +38,27 @@ export const sendCredit = async (senderId: number, receiverId: number, amount: n
   if (!fromUser) {
     throw new Error('Sender not found');
   }
+
   const toUser = await db('user').where('id', receiverId).first();
   if (!toUser) {
     throw new Error('Recipient not found');
   }
+
   if (fromUser.balance < amount) {
     throw new Error('Insufficient balance');
   }
+
   const transaction = {
     from_user_id: senderId,
     to_user_id: receiverId,
     amount,
     date: new Date().toISOString(),
   };
+
   await db('transactions').insert(transaction);
   await updateUserBalance(senderId, fromUser.balance - amount);
   await updateUserBalance(receiverId, toUser.balance + amount);
+
   return transaction;
 };
 
