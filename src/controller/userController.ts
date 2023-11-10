@@ -95,10 +95,23 @@ export const getUserTransactions = async (req: Request, res: Response) => {
 export const sendCredit = async (req: Request, res: Response) => {
   try {
     const { fromUserId, toUserId, amount } = req.body;
+    const fromUser = await userService.findUserById(fromUserId);
+
+    if (!fromUser) {
+      return res.status(404).json({ error: 'Sender not found' });
+    }
+
     const transaction = await userService.sendCredit(fromUserId, toUserId, amount);
     res.json(transaction);
   } catch (error) {
+    if ((error as any).message === 'Insufficient balance') {
+      return res.status(400).json({ error: 'Insufficient balance' });
+    } else if ((error as any).message === 'Sender not found' || (error as any).message .message === 'Recipient not found') {
+      return res.status(404).json({ error: (error as any).message .message });
+    }
     console.error('Error sending credit:', error);
     res.status(500).json({ error: 'Credit sending failed' });
   }
 };
+
+
