@@ -114,7 +114,4 @@ export const sendCredit = async (req: Request, res: Response) => {
   }
 };
 
-// if ((error as any).message === 'Insufficient balance') {
-//   return res.status(400).json({ error: 'Insufficient balance' });
-// }
 

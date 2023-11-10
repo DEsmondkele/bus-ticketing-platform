@@ -39,13 +39,13 @@ export const createTicket = async (userId: number): Promise<Ticket | null> => {
   
 
   export const createTransaction = async (transaction: any): Promise<number> => {
-    const [transactionId] = await db('transactions').insert(transaction);
+    const [transactionId] = await db('transaction').insert(transaction);
     return transactionId;
   };
   
 
-  export const getUserTransactions = async (userId: number): Promise<any[]> => {
-    const transactions = await db('transactions').where('user_id', userId);
+  export const getUserTransactions = async (from_user_id: number): Promise<any[]> => {
+    const transactions = await db('transaction').where('from_user_id', from_user_id);
     return transactions;
   };
   
