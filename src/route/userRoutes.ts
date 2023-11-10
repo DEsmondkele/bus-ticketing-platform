@@ -7,7 +7,7 @@ const router = Router();
 router.post('/create', userController.createUser);
 router.post('/login', userController.loginUser);
 router.post('/credit', userController.creditUser);
-router.get('/balance', userController.getBalance);
+router.get('/balance', userController.getMyBalance);
 router.get('/transactions', userController.getUserTransactions);
 router.post('/send', userController.sendCredit)
 

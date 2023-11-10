@@ -29,9 +29,31 @@ export const payForTicket = async (req: Request, res: Response) => {
     const newBalance = userBalance - ticket.price;
     await userService.updateUserBalance(userId, newBalance);
 
-    const newTicket = await ticketService.createTicket(ticket.passengerName, ticket.price);
+    const newTicket = await ticketService.createTicket(userId);
     res.json({ transactionId, newTicket, newBalance });
   } catch (error) {
+    res.status(500).json({ error: 'Payment failed' });
+  }
+};
+
+export const deposit = async (req: Request, res: Response) => {
+  try {
+    const { userId, amount } = req.body;
+
+    // Check if the user ID and amount are provided
+    if (!userId || !amount) {
+      return res.status(400).json({ error: 'Invalid data' });
+    }
+
+    const paymentSuccessful = await ticketService.creditMyAccount(userId, amount);
+
+    if (paymentSuccessful) {
+      res.json({ message: 'Payment successful' });
+    } else {
+      res.status(400).json({ error: 'Payment failed' });
+    }
+  } catch (error) {
+    console.error('Error making a payment:', error);
     res.status(500).json({ error: 'Payment failed' });
   }
 };
